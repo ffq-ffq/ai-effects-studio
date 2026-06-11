@@ -1,4 +1,15 @@
-import { StudioWorkbench } from "@/components/studio/studio-workbench";
+import dynamic from "next/dynamic";
+import { FullPageLoadingSkeleton } from "@/components/shared/loading-skeleton";
+
+const StudioWorkbench = dynamic(
+  () =>
+    import("@/components/studio/studio-workbench").then(
+      (mod) => mod.StudioWorkbench,
+    ),
+  {
+    loading: () => <FullPageLoadingSkeleton />,
+  },
+);
 
 export default function StudioPage() {
   return (

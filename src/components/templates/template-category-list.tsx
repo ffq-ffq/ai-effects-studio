@@ -10,7 +10,7 @@ export function TemplateCategoryList() {
               {category.icon}
             </span>
             <div>
-              <p className="text-xs font-mono text-muted-foreground">
+              <p className="font-mono text-xs text-muted-foreground">
                 {category.id}
               </p>
               <h3 className="font-medium">{category.label}</h3>

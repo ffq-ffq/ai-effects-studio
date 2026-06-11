@@ -19,7 +19,7 @@ export function LipSyncPanel({ selectedTemplate }: LipSyncPanelProps) {
   const [voice, setVoice] = useState<string>(lipSyncVoiceOptions[0].id);
   const overLimit = script.length > 300;
   const selectedCost = selectedTemplate?.creditCost ?? 8;
-  const selectedDuration = selectedTemplate?.outputNote ?? "约40秒";
+  const selectedDuration = selectedTemplate?.outputNote ?? "约 40 秒";
 
   const helperText = useMemo(() => {
     if (overLimit) return "文案已超过 300 字，请缩短后再生成。";

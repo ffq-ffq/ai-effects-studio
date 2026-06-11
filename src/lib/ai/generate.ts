@@ -29,6 +29,7 @@ export async function requestGeneration(payload: GeneratePayload) {
   if (!response.ok) {
     return {
       ok: false,
+      status: response.status,
       error:
         data &&
         typeof data === "object" &&
@@ -41,6 +42,7 @@ export async function requestGeneration(payload: GeneratePayload) {
 
   return data as {
     ok: boolean;
+    status?: number;
     data?: {
       generationId: string;
       status: string;

@@ -30,8 +30,12 @@ export function TemplateAllocationTable() {
                 {row.icon ? " " : null}
                 {row.industry}
               </TableCell>
-              <TableCell className="text-center">{row.imageTemplates || "-"}</TableCell>
-              <TableCell className="text-center">{row.videoTemplates || "-"}</TableCell>
+              <TableCell className="text-center">
+                {row.imageTemplates || "-"}
+              </TableCell>
+              <TableCell className="text-center">
+                {row.videoTemplates || "-"}
+              </TableCell>
               <TableCell className="text-center">
                 {row.virtualTryOnTemplates
                   ? `${row.virtualTryOnTemplates}（${row.virtualTryOnNote}）`
