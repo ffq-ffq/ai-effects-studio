@@ -12,7 +12,9 @@ import {
   Smartphone,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import JSZip from "jszip";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
@@ -21,7 +23,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 const XIAOHONGSHU_PUBLISH_URL =
@@ -104,20 +105,33 @@ export function ShareActionsPanel({
 
     context.fillStyle = "#f7f4ea";
     context.fillRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = "#1f3f3a";
+    context.fillStyle = "#171510";
     context.font = "600 72px sans-serif";
     context.fillText("AI 效果工坊", 96, 180);
     context.font = "400 42px sans-serif";
     context.fillText("全平台生成结果预览", 96, 270);
-    context.fillStyle = "#2f8f7b";
+    context.fillStyle = "#81662b";
     context.fillRect(96, 360, 888, 520);
     context.fillStyle = "#ffffff";
     context.font = "600 52px sans-serif";
     context.fillText("图片 + 视频 + 文案", 170, 625);
+    context.font = "400 30px sans-serif";
+    context.fillText(shareUrl.slice(0, 54), 96, 970);
 
     return new Promise<Blob | null>((resolve) => {
       canvas.toBlob((blob) => resolve(blob), "image/png");
     });
+  }
+
+  function downloadBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
   }
 
   async function copySharePackage() {
@@ -142,23 +156,67 @@ export function ShareActionsPanel({
     toast.success("分享链接已复制");
   }
 
-  function mockDownload(message: string) {
-    toast.success(message);
+  async function downloadShareZip() {
+    const zip = new JSZip();
+    const imageBlob = await createPreviewImageBlob();
+
+    zip.file("share-copy.txt", shareCopy);
+    zip.file("share-link.txt", shareUrl);
+
+    if (imageBlob) {
+      zip.file("preview.png", imageBlob);
+    }
+
+    if (qrCodeUrl) {
+      const qrResponse = await fetch(qrCodeUrl);
+      zip.file("phone-qr.png", await qrResponse.blob());
+    }
+
+    const blob = await zip.generateAsync({ type: "blob" });
+    downloadBlob(blob, `ai-effects-studio-${projectId}.zip`);
+    toast.success("ZIP 已开始下载");
+  }
+
+  async function saveToPhone() {
+    const imageBlob = await createPreviewImageBlob();
+
+    if (
+      imageBlob &&
+      typeof navigator.share === "function" &&
+      typeof File !== "undefined"
+    ) {
+      const file = new File([imageBlob], "ai-effects-preview.png", {
+        type: "image/png",
+      });
+
+      if (!navigator.canShare || navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: "AI 效果工坊生成结果",
+          text: shareCopy,
+          url: shareUrl,
+          files: [file],
+        });
+        toast.success("已打开系统分享面板");
+        return;
+      }
+    }
+
+    await downloadShareZip();
   }
 
   const actions: ShareAction[] = [
     {
       title: "保存全部到手机",
-      description: "打开手机扫码页，一次保存全部生成结果。",
+      description: "优先打开系统分享；不支持时下载包含预览图、二维码和文案的 ZIP。",
       icon: Smartphone,
       onClick: () => {
-        void copyShareLink();
+        void saveToPhone();
       },
       primary: true,
     },
     {
       title: "复制文案+图片",
-      description: "复制营销文案和客户预览链接，粘贴到微信/朋友圈。",
+      description: "复制营销文案和预览图，可直接粘贴到微信或朋友圈。",
       icon: ClipboardCopy,
       onClick: () => {
         void copySharePackage();
@@ -178,9 +236,11 @@ export function ShareActionsPanel({
     },
     {
       title: "下载全部尺寸 ZIP",
-      description: "打包下载 9 个平台规格的图片和视频。",
+      description: "打包下载分享文案、预览图、二维码和客户预览链接。",
       icon: Download,
-      onClick: () => mockDownload("已开始准备 ZIP 下载"),
+      onClick: () => {
+        void downloadShareZip();
+      },
     },
     {
       title: "生成分享链接",
@@ -228,9 +288,9 @@ export function ShareActionsPanel({
                 <Images className="size-5" />
               </div>
               <div className="min-w-0">
-                <p className="font-medium">已生成全平台素材包</p>
+                <p className="font-medium">全平台素材包</p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  包含 9 个平台尺寸、营销文案和客户预览链接。
+                  包含平台尺寸、营销文案和客户预览链接。
                 </p>
               </div>
             </div>
