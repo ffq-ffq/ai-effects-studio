@@ -32,6 +32,16 @@ function isWebhookPath(pathname: string) {
   return pathname === "/api/webhook/stripe";
 }
 
+function isPublicApiRequest(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (request.method !== "GET") {
+    return false;
+  }
+
+  return pathname === "/api/health" || pathname === "/api/templates";
+}
+
 function getClientIp(request: NextRequest) {
   return (
     request.headers.get("cf-connecting-ip") ??
@@ -214,6 +224,10 @@ export default async function middleware(request: NextRequest) {
 
     if (rateLimited) {
       return applySecurityHeaders(rateLimited);
+    }
+
+    if (isPublicApiRequest(request)) {
+      return applySecurityHeaders(NextResponse.next());
     }
 
     if (isWebhookPath(pathname)) {
